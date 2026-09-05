@@ -1,0 +1,122 @@
+server:
+  port: 8080
+  tomcat:
+    threads:
+      max: 200
+      min-spare: 20
+    accept-count: 100
+    connection-timeout: 5000ms
+
+spring:
+  application:
+    name: distributed-url-shortener
+
+  # Datasource Configuration (PostgreSQL / H2)
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:h2:mem:urlshortener;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1}
+    driver-class-name: ${SPRING_DATASOURCE_DRIVER:org.h2.Driver}
+    username: ${SPRING_DATASOURCE_USERNAME:sa}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
+    hikari:
+      maximum-pool-size: 30
+      minimum-idle: 10
+      idle-timeout: 30000
+      connection-timeout: 20000
+
+  jpa:
+    database-platform: ${SPRING_JPA_PLATFORM:org.hibernate.dialect.H2Dialect}
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        jdbc:
+          batch_size: 50
+
+  # Redis Configuration
+  data:
+    redis:
+      repositories:
+        enabled: false
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 50
+          max-idle: 20
+          min-idle: 5
+
+    # MongoDB Configuration
+    mongodb:
+      auto-index-creation: false
+      uri: ${SPRING_DATA_MONGODB_URI:mongodb://localhost:27017/url_analytics}
+
+  # Kafka Configuration
+  kafka:
+    enabled: ${SPRING_KAFKA_ENABLED:false}
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: 1
+    consumer:
+      group-id: url-analytics-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+
+# Application-Specific Custom Properties
+app:
+  base-url: ${APP_BASE_URL:http://localhost:8080}
+  id-generator:
+    block-size: 10000
+  cache:
+    default-ttl: 86400s
+    negative-ttl: 30s
+  ratelimit:
+    write-rpm: 100
+    read-rpm: 1000
+  kafka:
+    click-topic: url-clicks
+  cleanup:
+    interval-ms: 300000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+
+---
+# Docker Production Profile
+spring:
+  config:
+    activate:
+      on-profile: docker
+
+  datasource:
+    url: jdbc:postgresql://postgres:5432/urlshortener_db
+    driver-class-name: org.postgresql.Driver
+    username: postgres_user
+    password: postgres_password
+
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update
+
+  data:
+    redis:
+      host: redis
+      port: 6379
+    mongodb:
+      uri: mongodb://mongodb:27017/url_analytics
+
+  kafka:
+    enabled: true
+    bootstrap-servers: kafka:9092

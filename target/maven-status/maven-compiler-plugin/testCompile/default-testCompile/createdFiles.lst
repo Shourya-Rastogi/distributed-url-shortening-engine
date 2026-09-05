@@ -1,0 +1,8 @@
+com\distributed\urlshortener\FakeUrlMappingRepository.class
+com\distributed\urlshortener\core\DistributedIdGeneratorTest.class
+com\distributed\urlshortener\service\KafkaAnalyticsIntegrationTest.class
+com\distributed\urlshortener\service\UrlShortenerServiceTest.class
+com\distributed\urlshortener\core\Base62EncoderTest.class
+com\distributed\urlshortener\service\RateLimiterServiceTest.class
+com\distributed\urlshortener\benchmark\RedirectLoadBenchmark.class
+com\distributed\urlshortener\service\UrlRedirectServiceTest.class
